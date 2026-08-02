@@ -11,6 +11,7 @@ const FM = {
 
 type WorkConfig = {
     regionMap: Record<string, string>;
+    initialContents: Record<string, string>;
 };
 
 const DB_WORK_CONFIG: WorkConfig = {
@@ -18,6 +19,20 @@ const DB_WORK_CONFIG: WorkConfig = {
         DB作成: "DB",
         CSV作成: "CSV",
         E設定: "E",
+    },
+
+    initialContents: {
+        DB: `
+- [ ] DB作成
+- [ ] ライセンス発行
+`,
+        CSV: `
+- [ ] CSV作成
+- [ ] CSVアップロード
+`,
+        E: `
+- [ ] Eリザーブ登録
+`
     }
 };
 
@@ -78,7 +93,7 @@ function appendRegionContent(
 }
 
 export default class MyPlugin extends Plugin {
-    private workConfig = DB_WORK_CONFIG
+    private workConfig = DB_WORK_CONFIG;
     private previousWorkTypes = new Map<TFile, string[]>();
     private isUpdating = new Set<TFile>(); // 二重発火防止フラグ
     private isRenaming = new Set<TFile>();
@@ -88,9 +103,7 @@ export default class MyPlugin extends Plugin {
 
         if (!archivedContents) {
             archivedContents = {
-                DB: "",
-                CSV: "",
-                E: ""
+                ...this.workConfig.initialContents
             };
 
             this.archivedContentsMap.set(file, archivedContents);

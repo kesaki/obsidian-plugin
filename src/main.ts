@@ -70,6 +70,9 @@ function appendRegionContent(
 }
 
 
+
+
+
 export default class MyPlugin extends Plugin {
     private previousWorkTypes = new Map<TFile, string[]>();
     private isUpdating = new Set<TFile>(); // 二重発火防止フラグ
@@ -79,50 +82,47 @@ export default class MyPlugin extends Plugin {
         CSV: string;
         E: string;
     }>();
+    private getDeletedContents(file: TFile): { DB: string; CSV: string; E: string } {
+        let deletedContents = this.deletedContentsMap.get(file);
 
+        if (!deletedContents) {
+            deletedContents = {
+                DB: "",
+                CSV: "",
+                E: ""
+            };
 
-
-
-
-//     private deletedContent = {
-//         DB: `
-// - [ ] DB作成
-// - [ ] ライセンス発行
-// `,
-//         CSV: `
-// - [ ] CSV作成
-// - [ ] CSVアップロード
-// `,
-//         E: `
-// - [ ] Eリザーブ登録
-// `
-//     };
-
-    private async initializePreviousWorkTypes() {
-
-        if (this.previousWorkTypes.size > 0) {
-            return;
+            this.deletedContentsMap.set(file, deletedContents);
         }
 
-        for (const file of this.app.vault.getMarkdownFiles()) {
-            const cache = this.app.metadataCache.getFileCache(file);
-
-            const workType: string[] =
-                cache?.frontmatter?.[FM.WORK_TYPE] ?? [];
-
-            this.previousWorkTypes.set(file, [...workType]);
-        }
+        return deletedContents;
     }
+
+
+
 
     // onloadはObsidianがプラグイン読み込み時に呼び出すメソッド
     // Pluginクラスのonloadメソッドをオーバーライドする
     async onload() {
 
         this.registerEvent(
-            this.app.metadataCache.on("resolved", async () => {
-                await this.initializePreviousWorkTypes();
+            this.app.workspace.on("file-open", async (file) => {
+                if (!file) {
+                    return;
+                }
+
+                const cache = this.app.metadataCache.getFileCache(file);
+
+                const workType: string[] =
+                    cache?.frontmatter?.[FM.WORK_TYPE] ?? [];
+
+                this.previousWorkTypes.set(file, [...workType]);
+
+                console.log("開いたファイル登録:", file.path);
             })
         );
+
+
 
         // ===== メタデータ変更イベント =====
         this.registerEvent(
@@ -163,26 +163,7 @@ export default class MyPlugin extends Plugin {
                     let content = await this.app.vault.read(file);
 
 
-
-                    let deletedContent = this.deletedContentsMap.get(file);
-
-console.log("退避Mapサイズ:", this.deletedContentsMap.size);
-console.log("対象ファイル:", file.path);
-console.log(
-    "現在退避:",
-    this.deletedContentsMap.get(file)
-);
-
-                    if (!deletedContent) {
-                        deletedContent = {
-                            DB: "",
-                            CSV: "",
-                            E: ""
-                        };
-
-                        this.deletedContentsMap.set(file, deletedContent);
-}
-
+                    const deletedContents = this.getDeletedContents(file);
 
 
                     for (const item of removedWorkTypes) {
@@ -195,7 +176,7 @@ console.log(
                         const regionContent = getRegionContent(content, regionName);
 
                         if (regionContent) {
-                            deletedContent[regionName] = regionContent;
+                            deletedContents[regionName] = regionContent;
                         }
 
                         content = clearRegion(content, regionName);
@@ -208,7 +189,7 @@ console.log(
                             continue;
                         }
 
-                        const addContent = deletedContent[regionName] ?? "";
+                        const addContent = deletedContents[regionName] ?? "";
 
                         content = appendRegionContent(
                             content,

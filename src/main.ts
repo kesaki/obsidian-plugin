@@ -15,6 +15,12 @@ const REGION_MAP = {
 	E設定: "E",
 } as const;
 
+type ArchivedContents = {
+    DB: string;
+    CSV: string;
+    E: string;
+};
+
 function createDatePrefix(donyuDate: string): string {
     const date = new Date(donyuDate);
 
@@ -73,33 +79,26 @@ export default class MyPlugin extends Plugin {
     private previousWorkTypes = new Map<TFile, string[]>();
     private isUpdating = new Set<TFile>(); // 二重発火防止フラグ
     private isRenaming = new Set<TFile>();
-    private deletedContentsMap = new Map<TFile, {
-        DB: string;
-        CSV: string;
-        E: string;
-    }>();
-    private getDeletedContents(file: TFile): { DB: string; CSV: string; E: string } {
-        let deletedContents = this.deletedContentsMap.get(file);
+    private archivedContentsMap = new Map<TFile, ArchivedContents>();
+    private getArchivedContents(file: TFile): ArchivedContents {
+        let archivedContents  = this.archivedContentsMap.get(file);
 
-        if (!deletedContents) {
-            deletedContents = {
+        if (!archivedContents) {
+            archivedContents = {
                 DB: "",
                 CSV: "",
                 E: ""
             };
 
-            this.deletedContentsMap.set(file, deletedContents);
+            this.archivedContentsMap.set(file, archivedContents);
         }
 
-        return deletedContents;
+        return archivedContents;
     }
 
-
-    // onloadはObsidianがプラグイン読み込み時に呼び出すメソッド
-    // Pluginクラスのonloadメソッドをオーバーライドする
     async onload() {
 
-        this.registerEvent(
+        this.registerEvent( // ファイルがアクティベートされた時の業務種別プロパティを取る
             this.app.workspace.on("file-open", async (file) => {
                 if (!file) {
                     return;
@@ -113,15 +112,14 @@ export default class MyPlugin extends Plugin {
                 this.previousWorkTypes.set(file, [...workType]);
 
                 console.log("開いたファイル登録:", file.path);
+                console.log("元の業務種別：", this.previousWorkTypes.get(file));
             })
         );
-
-
 
         // ===== メタデータ変更イベント =====
         this.registerEvent(
 
-            // フロントマターに変更が加わったとき、コールバックを実行するという設定
+            // フロントマターに変更が加わったとき、コールバックを実行する
             // コールバックにはmetadataCacheのfile,data,cacheが渡される
             this.app.metadataCache.on(
                 "changed",
@@ -134,11 +132,6 @@ export default class MyPlugin extends Plugin {
                     if (this.isUpdating.has(file)) {
                         return;
                     }
-
-                    const donyuDate  = cache.frontmatter?.[FM.START_DATE];
-                    const kanriNo    = cache.frontmatter?.[FM.KANRI_NO];
-                    const salonName  = cache.frontmatter?.[FM.SALON_NAME];
-                    const reserved   = cache.frontmatter?.[FM.RESERVED];
 
                     const workType: string[] = cache.frontmatter?.[FM.WORK_TYPE] ?? [];
                     const oldWorkType = this.previousWorkTypes.get(file);
@@ -156,8 +149,7 @@ export default class MyPlugin extends Plugin {
 
                     let content = await this.app.vault.read(file);
 
-
-                    const deletedContents = this.getDeletedContents(file);
+                    const archivedContents = this.getArchivedContents(file);
 
 
                     for (const item of removedWorkTypes) {
@@ -170,7 +162,7 @@ export default class MyPlugin extends Plugin {
                         const regionContent = getRegionContent(content, regionName);
 
                         if (regionContent) {
-                            deletedContents[regionName] = regionContent;
+                            archivedContents[regionName] = regionContent;
                         }
 
                         content = clearRegion(content, regionName);
@@ -183,7 +175,7 @@ export default class MyPlugin extends Plugin {
                             continue;
                         }
 
-                        const addContent = deletedContents[regionName] ?? "";
+                        const addContent = archivedContents[regionName] ?? "";
 
                         content = appendRegionContent(
                             content,
@@ -201,10 +193,14 @@ export default class MyPlugin extends Plugin {
                         this.isUpdating.delete(file);
                     }
 
-
                     // ここで今回の状態を保存, 参照渡しは危険なのでworkTypeのコピーを代入している
                     this.previousWorkTypes.set(file, [...workType]);
 
+                    // ここからファイル名変更処理
+                    const donyuDate  = cache.frontmatter?.[FM.START_DATE];
+                    const kanriNo    = cache.frontmatter?.[FM.KANRI_NO];
+                    const salonName  = cache.frontmatter?.[FM.SALON_NAME];
+                    const reserved   = cache.frontmatter?.[FM.RESERVED];
 
                     if (!donyuDate || !kanriNo || !salonName) {
                         return;

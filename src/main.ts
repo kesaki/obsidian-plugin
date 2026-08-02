@@ -69,10 +69,6 @@ function appendRegionContent(
     );
 }
 
-
-
-
-
 export default class MyPlugin extends Plugin {
     private previousWorkTypes = new Map<TFile, string[]>();
     private isUpdating = new Set<TFile>(); // 二重発火防止フラグ
@@ -97,8 +93,6 @@ export default class MyPlugin extends Plugin {
 
         return deletedContents;
     }
-
-
 
 
     // onloadはObsidianがプラグイン読み込み時に呼び出すメソッド
@@ -208,7 +202,6 @@ export default class MyPlugin extends Plugin {
                     }
 
 
-
                     // ここで今回の状態を保存, 参照渡しは危険なのでworkTypeのコピーを代入している
                     this.previousWorkTypes.set(file, [...workType]);
 
@@ -260,8 +253,8 @@ export default class MyPlugin extends Plugin {
                 }
 
                 exec(
-                    `"C:\\Users\\vinx\\Desktop\\報告やメール3\\py_scripts\\.venv\\Scripts\\python.exe" ` +
-                    `"C:\\Users\\vinx\\Desktop\\報告やメール3\\py_scripts\\完了報告.py" ` +
+                    `"C:\\Users\\test\\.venv\\Scripts\\python.exe" ` +
+                    `"C:\\Users\\test.py" ` +
                     `"${ kanriNo}"`,
                     (error, stdout, stderr) => {
                         if (stdout) console.log(stdout);

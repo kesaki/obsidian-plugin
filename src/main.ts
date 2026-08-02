@@ -9,17 +9,19 @@ const FM = {
 	RESERVED: "確定",
 } as const;
 
-const REGION_MAP = {
-	DB作成: "DB",
-	CSV作成: "CSV",
-	E設定: "E",
-} as const;
-
-type ArchivedContents = {
-    DB: string;
-    CSV: string;
-    E: string;
+type WorkConfig = {
+    regionMap: Record<string, string>;
 };
+
+const DB_WORK_CONFIG: WorkConfig = {
+    regionMap: {
+        DB作成: "DB",
+        CSV作成: "CSV",
+        E設定: "E",
+    }
+};
+
+type ArchivedContents = Record<string, string>;
 
 function createDatePrefix(donyuDate: string): string {
     const date = new Date(donyuDate);
@@ -76,6 +78,7 @@ function appendRegionContent(
 }
 
 export default class MyPlugin extends Plugin {
+    private workConfig = DB_WORK_CONFIG
     private previousWorkTypes = new Map<TFile, string[]>();
     private isUpdating = new Set<TFile>(); // 二重発火防止フラグ
     private isRenaming = new Set<TFile>();
@@ -153,7 +156,7 @@ export default class MyPlugin extends Plugin {
 
 
                     for (const item of removedWorkTypes) {
-                        const regionName = REGION_MAP[item as keyof typeof REGION_MAP];
+                        const regionName = this.workConfig.regionMap[item];
 
                         if (!regionName) {
                             continue;
@@ -169,7 +172,7 @@ export default class MyPlugin extends Plugin {
                     }
 
                     for (const item of addedWorkTypes) {
-                        const regionName = REGION_MAP[item as keyof typeof REGION_MAP];
+                        const regionName = this.workConfig.regionMap[item];
 
                         if (!regionName) {
                             continue;

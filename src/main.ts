@@ -102,9 +102,7 @@ export default class MyPlugin extends Plugin {
         let archivedContents  = this.archivedContentsMap.get(file);
 
         if (!archivedContents) {
-            archivedContents = {
-                ...this.workConfig.initialContents
-            };
+            archivedContents = {};
 
             this.archivedContentsMap.set(file, archivedContents);
         }

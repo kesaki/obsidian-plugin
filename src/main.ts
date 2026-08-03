@@ -189,6 +189,15 @@ export default class MyPlugin extends Plugin {
                             continue;
                         }
 
+                        // 初期値を入れるべきかのチェック
+                        const regionContent = getRegionContent(content, regionName);
+                        const isRegionEmpty = regionContent.trim() === "";
+                        const isArchiveEmpty = (archivedContents[regionName] ?? "").trim() === "";
+                        if (isRegionEmpty && isArchiveEmpty) {
+                            archivedContents[regionName] =
+                                this.workConfig.initialContents[regionName] ?? "";
+                        }
+
                         const addContent = archivedContents[regionName] ?? "";
 
                         content = appendRegionContent(

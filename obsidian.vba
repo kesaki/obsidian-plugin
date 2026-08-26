@@ -1,10 +1,9 @@
-Option Explicit
 Sub CheckIncompleteTasks()
     Dim filePath As String
     Dim stream As Object
     Dim fileContent As String
     Dim lines() As String
-    Dim i As Long
+    Dim line As Variant
     Dim regEx As Object
     Dim incompleteCount As Long
     Dim warningMsg As String
@@ -29,7 +28,7 @@ Sub CheckIncompleteTasks()
     regEx.IgnoreCase = True
     regEx.Global = False
     
-    ' 改行コードでファイルを各行に分割
+    ' 改行コードを統一して各行に分割
     fileContent = Replace(fileContent, vbCrLf, vbLf)
     fileContent = Replace(fileContent, vbCr, vbLf)
     lines = Split(fileContent, vbLf)
@@ -37,16 +36,15 @@ Sub CheckIncompleteTasks()
     incompleteCount = 0
     warningMsg = "以下の未完了タスクが見つかりました：" & vbCrLf & vbCrLf
     
-    ' 1行ずつ走査
-    For i = LBound(lines) To UBound(lines)
-        If regEx.test(lines(i)) Then
+    ' For Each で各行を走査（行番号なし）
+    For Each line In lines
+        If regEx.Test(line) Then
             incompleteCount = incompleteCount + 1
-            ' 最初の20件までをメッセージ用ストックに追加
             If incompleteCount <= 20 Then
-                warningMsg = warningMsg & "・ " & lines(i) & " (行: " & (i + 1) & ")" & vbCrLf
+                warningMsg = warningMsg & "・ " & line & vbCrLf
             End If
         End If
-    Next i
+    Next line
     
     ' 判定結果に応じた処理
     If incompleteCount > 0 Then

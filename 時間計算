@@ -1,0 +1,48 @@
+(
+  (
+    (
+      number(終了時刻.split(":")[0]) * 60 +
+      number(終了時刻.split(":")[1])
+    ) -
+    (
+      number(開始時刻.split(":")[0]) * 60 +
+      number(開始時刻.split(":")[1])
+    )
+  ) / 60
+).floor().toString()
++
+":"
++
+if(
+  (
+    (
+      number(終了時刻.split(":")[0]) * 60 +
+      number(終了時刻.split(":")[1])
+    ) -
+    (
+      number(開始時刻.split(":")[0]) * 60 +
+      number(開始時刻.split(":")[1])
+    )
+  ) % 60 < 10,
+  "0" +
+  (
+    (
+      number(終了時刻.split(":")[0]) * 60 +
+      number(終了時刻.split(":")[1])
+    ) -
+    (
+      number(開始時刻.split(":")[0]) * 60 +
+      number(開始時刻.split(":")[1])
+    )
+  ) % 60,
+  (
+    (
+      number(終了時刻.split(":")[0]) * 60 +
+      number(終了時刻.split(":")[1])
+    ) -
+    (
+      number(開始時刻.split(":")[0]) * 60 +
+      number(開始時刻.split(":")[1])
+    )
+  ) % 60
+)

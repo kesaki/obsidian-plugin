@@ -1,0 +1,73 @@
+import { Plugin, Notice } from "obsidian";
+
+export default class MyPlugin extends Plugin {
+	async onload() {
+		console.log("gen_url onload開始なのねん");
+
+		this.registerObsidianProtocolHandler(
+			"gen_url",
+			(params) => {
+				const storeId = params.store_id;
+				const windowsUserName = process.env.USERNAME ?? "";
+
+				const userDictionary: Record<
+					string,
+					{
+						queryId: string;
+						queryName: string;
+					}
+				> = {
+					hk: {
+						queryId: "HK001",
+						queryName: "fikakin",
+					},
+					tanaka: {
+						queryId: "TANAKA001",
+						queryName: "tanaka",
+					},
+					suzuki: {
+						queryId: "SUZUKI001",
+						queryName: "suzuki",
+					},
+					yamada: {
+						queryId: "YAMADA001",
+						queryName: "yamada",
+					},
+				};
+
+				const userInfo = userDictionary[windowsUserName];
+
+				if (!userInfo) {
+					new Notice(
+						`Windowsユーザー「${windowsUserName}」が辞書にないのねん`
+					);
+					return;
+				}
+
+				const queryId = userInfo.queryId;
+				if (!storeId) {
+					new Notice("store_idが指定されていないのねん");
+					return;
+				}
+				const queryName = userInfo.queryName;
+
+				const url =
+					"https://portal.example/search" +
+					`?login_id=${encodeURIComponent(queryId)}` +
+					`&user_name=${encodeURIComponent(queryName)}` +
+					`&store_id=${encodeURIComponent(storeId)}`;
+
+
+				console.log("生成したURLなのねん", url);
+
+				window.open(url, "_blank");
+
+				new Notice("ポータルを開いたのねん");
+			}
+		);
+	}
+
+	onunload() {
+		console.log("プラグインを終了したのねん");
+	}
+}

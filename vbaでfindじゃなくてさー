@@ -1,0 +1,62 @@
+Sub CollectDatesFast()
+
+    Dim srcArr As Variant
+    Dim outArr() As Variant
+    Dim i As Long, o As Long
+    Dim lastRow As Long
+    Dim startDate As Date, endDate As Date
+
+    startDate = DateSerial(2026, 9, 1)
+    endDate = DateSerial(2026, 9, 30)
+
+    lastRow = Cells(Rows.Count, "F").End(xlUp).Row
+
+    ' A～F列を一括で配列に読み込む
+    srcArr = Range("A1:F" & lastRow).Value
+
+    ' 1回目：該当件数を数える
+    For i = 1 To lastRow
+
+        If IsDate(srcArr(i, 6)) Then
+            If srcArr(i, 6) >= startDate _
+               And srcArr(i, 6) < endDate + 1 Then
+
+                o = o + 1
+
+            End If
+        End If
+
+    Next i
+
+    ' 該当データがなければ終了
+    If o = 0 Then Exit Sub
+
+    ' 必要な行数ぴったりで配列を確保
+    ReDim outArr(1 To o, 1 To 5)
+
+    ' 2回目：データを詰める
+    o = 0
+
+    For i = 1 To lastRow
+
+        If IsDate(srcArr(i, 6)) Then
+            If srcArr(i, 6) >= startDate _
+               And srcArr(i, 6) < endDate + 1 Then
+
+                o = o + 1
+
+                outArr(o, 1) = srcArr(i, 1)
+                outArr(o, 2) = srcArr(i, 2)
+                outArr(o, 3) = srcArr(i, 3)
+                outArr(o, 4) = srcArr(i, 4)
+                outArr(o, 5) = srcArr(i, 6)
+
+            End If
+        End If
+
+    Next i
+
+    ' 一括出力
+    Range("X1").Resize(o, 5).Value = outArr
+
+End Sub

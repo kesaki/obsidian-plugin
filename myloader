@@ -1,0 +1,89 @@
+
+import yaml
+import frontmatter
+from frontmatter.default_handlers import YAMLHandler
+
+
+# 独自ローダー
+class MyLoader(yaml.SafeLoader):
+    pass
+
+
+# 独自ダンパー
+class MyDumper(yaml.SafeDumper):
+    pass
+
+
+# 日時を date / datetime 型ではなく文字列として読む
+MyLoader.add_constructor(
+    "tag:yaml.org,2002:timestamp",
+    lambda loader, node: loader.construct_scalar(node)
+)
+# 数字を int 型ではなく文字列として読む
+MyLoader.add_constructor(
+    "tag:yaml.org,2002:int",
+    lambda loader, node: loader.construct_scalar(node)
+)
+
+# キーの順序を維持する
+MyDumper.sort_keys = False
+
+
+# 独自ハンドラー
+class MyHandler(YAMLHandler):
+
+    def load(self, fm, **kwargs):
+        kwargs["Loader"] = MyLoader
+        return super().load(fm, **kwargs)
+
+    def export(self, metadata, **kwargs):
+        kwargs["Dumper"] = MyDumper
+        kwargs["sort_keys"] = False
+        return super().export(metadata, **kwargs)
+
+
+
+text = """
+name: mugennen
+active: true
+count: 123
+time: 11:20
+date: 2026-10-10
+"""
+
+
+data = yaml.load(text, Loader=MyLoader)
+# data = yaml.load(text, Loader=yaml.SafeLoader)
+
+print(data)
+print(type(data["active"]))
+print(type(data["count"]))
+print(f'timeは{type(data["time"])}')
+print(type(data["date"]))
+
+# ダンプ
+output = yaml.dump(
+    data, Dumper=MyDumper, allow_unicode=True, sort_keys=False
+    # data, Dumper=yaml.SafeDumper, allow_unicode=True, sort_keys=False
+)
+
+print(output)
+
+
+
+
+
+
+
+# # 読み込み
+# with open("note.md", "r", encoding="utf-8") as file:
+#     post = frontmatter.load(file, handler=MyHandler())
+
+
+# # プロパティを変更
+# post["name"] = "fikakin"
+
+
+# # 上書き保存
+# with open("note.md", "w", encoding="utf-8") as file:
+#     frontmatter.dump(post, file, handler=MyHandler())
